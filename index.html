@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מחשבון שכר | ברוטו לנטו</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #e0e0e0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 16px rgba(99,102,241,0.5));
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 520px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    input[type="number"], select {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
+      direction: ltr;
+      text-align: right;
+    }
+
+    input[type="number"]:focus, select:focus {
+      border-color: #3b82f6;
+      background: rgba(59,130,246,0.1);
+    }
+
+    select option { background: #1a1a2e; color: #fff; }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+
+    .btn-calc {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-calc:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-calc:active { transform: translateY(0); }
+
+    /* Results */
+    .results { display: none; }
+    .results.visible { display: block; }
+
+    .net-banner {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .net-banner .label { font-size: 0.95rem; color: rgba(255,255,255,0.8); }
+    .net-banner .amount { font-size: 2.2rem; font-weight: 800; color: #fff; direction: ltr; }
+    .net-banner .sub { font-size: 0.82rem; color: rgba(255,255,255,0.65); margin-top: 4px; }
+
+    .breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: background 0.15s;
+    }
+
+    .breakdown-row:hover { background: rgba(255,255,255,0.07); }
+
+    .breakdown-row .row-label { font-size: 0.92rem; color: #cbd5e1; }
+    .breakdown-row .row-value { font-size: 0.95rem; font-weight: 600; direction: ltr; }
+
+    .row-value.deduct { color: #f87171; }
+    .row-value.gross  { color: #94a3b8; }
+    .row-value.credit { color: #34d399; }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+      margin: 4px 0;
+    }
+
+    .tax-table-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #3b82f6;
+      font-size: 0.88rem;
+      margin-top: 16px;
+      user-select: none;
+    }
+
+    .tax-table-toggle:hover { color: #60a5fa; }
+
+    .tax-table {
+      display: none;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .tax-table.open { display: block; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: rgba(255,255,255,0.06); color: #94a3b8; padding: 10px 14px; text-align: right; font-weight: 500; }
+    td { padding: 9px 14px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.05); text-align: right; direction: ltr; }
+    td:first-child { text-align: right; direction: rtl; }
+    tr.active-row td { background: rgba(59,130,246,0.12); color: #fff; }
+
+    footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 0.78rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo-wrap">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#6366f1"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#10b981"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+        </defs>
+        <!-- background circle -->
+        <circle cx="28" cy="28" r="28" fill="url(#lg1)" opacity="0.15"/>
+        <!-- coin shape -->
+        <circle cx="28" cy="28" r="22" fill="url(#lg1)"/>
+        <circle cx="28" cy="28" r="18" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <!-- shekel symbol -->
+        <text x="28" y="36" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Arial, sans-serif">₪</text>
+        <!-- arrow arc -->
+        <path d="M 10 28 A 18 18 0 0 1 46 28" stroke="url(#lg2)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/>
+      </svg>
+    </div>
+    <h1>מחשבון שכר ברוטו ← נטו</h1>
+    <p>חישוב על בסיס נתוני מס 2025 — מס הכנסה, ביטוח לאומי וביטוח בריאות</p>
+  </header>
+
+  <!-- Input Card -->
+  <div class="card">
+    <h2>פרטי השכר</h2>
+    <div class="grid-2">
+      <div class="field">
+        <label for="gross">שכר ברוטו חודשי (₪)</label>
+        <input type="number" id="gross" placeholder="לדוגמה: 15000" min="0" />
+      </div>
+      <div class="field">
+        <label for="credits">נקודות זיכוי</label>
+        <input type="number" id="credits" value="2.25" step="0.25" min="0" max="20" />
+        <span class="hint">ברירת מחדל: 2.25 (תושב ישראל)</span>
+      </div>
+      <div class="field">
+        <label for="pension">% קרן פנסיה (עובד)</label>
+        <input type="number" id="pension" value="6" step="0.5" min="0" max="15" />
+      </div>
+      <div class="field">
+        <label for="status">מצב אישי</label>
+        <select id="status">
+          <option value="0">רווק / רווקה</option>
+          <option value="0.5">נשוי/ה (בן/בת זוג עובד)</option>
+          <option value="1">נשוי/ה (בן/בת זוג לא עובד)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-calc" onclick="calculate()">חשב שכר נטו</button>
+  </div>
+
+  <!-- Results -->
+  <div class="card results" id="results">
+    <h2>תוצאות החישוב</h2>
+
+    <div class="net-banner">
+      <div>
+        <div class="label">שכר נטו לקבלה</div>
+        <div class="sub" id="net-sub"></div>
+      </div>
+      <div class="amount" id="net-amount"></div>
+    </div>
+
+    <div class="breakdown" id="breakdown"></div>
+
+    <div class="tax-table-toggle" onclick="toggleTable()">
+      <span id="toggle-icon">▶</span>
+      <span>פירוט מדרגות מס הכנסה</span>
+    </div>
+    <div class="tax-table" id="tax-table">
+      <table>
+        <thead>
+          <tr>
+            <th>מדרגה</th>
+            <th>עד (₪/חודש)</th>
+            <th>שיעור</th>
+            <th>מס במדרגה</th>
+          </tr>
+        </thead>
+        <tbody id="tax-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>* החישוב הוא הערכה בלבד ואינו מהווה ייעוץ מס מקצועי</footer>
+</div>
+
+<script>
+// ── Tax brackets 2025 (monthly, NIS) ──────────────────────────────────────
+const BRACKETS = [
+  { max: 6790,  rate: 0.10 },
+  { max: 9730,  rate: 0.14 },
+  { max: 15640, rate: 0.20 },
+  { max: 21710, rate: 0.31 },
+  { max: 45090, rate: 0.35 },
+  { max: Infinity, rate: 0.47 },
+];
+
+const CREDIT_POINT_VALUE = 242;   // NIS per point per month (2025)
+
+// National Insurance + Health (employee, monthly ceiling 47,465)
+const NI_THRESHOLD   = 7_522;
+const NI_CEILING     = 47_465;
+const NI_LOW_RATE    = 0.004;
+const NI_HIGH_RATE   = 0.070;
+const HEALTH_LOW     = 0.031;
+const HEALTH_HIGH    = 0.050;
+
+function calcTax(taxable) {
+  let tax = 0;
+  let prev = 0;
+  const rows = [];
+  for (const b of BRACKETS) {
+    if (taxable <= 0) { rows.push({ label: fmt(b.max), rate: pct(b.rate), tax: 0, active: false }); continue; }
+    const chunk = Math.min(taxable, b.max - prev);
+    const t = chunk * b.rate;
+    tax += t;
+    rows.push({ label: b.max === Infinity ? 'ומעלה' : fmt(b.max), rate: pct(b.rate), tax: t, active: chunk > 0 });
+    taxable -= chunk;
+    prev = b.max;
+    if (b.max === Infinity) break;
+  }
+  return { tax, rows };
+}
+
+function calcNI(gross) {
+  const cappedGross = Math.min(gross, NI_CEILING);
+  if (cappedGross <= NI_THRESHOLD) {
+    return { ni: cappedGross * NI_LOW_RATE, health: cappedGross * HEALTH_LOW };
+  }
+  const ni     = NI_THRESHOLD * NI_LOW_RATE     + (cappedGross - NI_THRESHOLD) * NI_HIGH_RATE;
+  const health = NI_THRESHOLD * HEALTH_LOW       + (cappedGross - NI_THRESHOLD) * HEALTH_HIGH;
+  return { ni, health };
+}
+
+function fmt(n) {
+  if (n === Infinity) return '∞';
+  return '₪' + Math.round(n).toLocaleString('he-IL');
+}
+function pct(r) { return (r * 100) + '%'; }
+
+function calculate() {
+  const gross   = parseFloat(document.getElementById('gross').value)   || 0;
+  const credits = parseFloat(document.getElementById('credits').value) || 0;
+  const pension = parseFloat(document.getElementById('pension').value) || 0;
+  const extra   = parseFloat(document.getElementById('status').value)  || 0;
+
+  if (gross <= 0) {
+    document.getElementById('gross').focus();
+    return;
+  }
+
+  const pensionAmt = gross * (pension / 100);
+  const taxableBase = gross - pensionAmt;
+
+  // Total credit points including status bonus
+  const totalCredits = credits + extra;
+  const creditDeduction = totalCredits * CREDIT_POINT_VALUE;
+
+  const { tax: rawTax, rows } = calcTax(taxableBase);
+  const incomeTax = Math.max(0, rawTax - creditDeduction);
+
+  const { ni, health } = calcNI(gross);
+  const totalDeductions = incomeTax + ni + health + pensionAmt;
+  const net = gross - totalDeductions;
+  const effectiveRate = (totalDeductions / gross * 100).toFixed(1);
+
+  // ── Render net banner ──────────────────────────────────────────────────
+  document.getElementById('net-amount').textContent = fmt(net);
+  document.getElementById('net-sub').textContent =
+    `שיעור ניכוי כולל: ${effectiveRate}%  ·  מתוך ${fmt(gross)} ברוטו`;
+
+  // ── Render breakdown ──────────────────────────────────────────────────
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = '';
+  const rows2 = [
+    { label: 'שכר ברוטו',              value: gross,       cls: 'gross' },
+    null,
+    { label: `פנסיה עובד (${pension}%)`, value: -pensionAmt, cls: 'deduct' },
+    { label: `זיכוי מס (${totalCredits} נקודות)`, value: creditDeduction, cls: 'credit' },
+    { label: 'מס הכנסה',               value: -incomeTax,  cls: 'deduct' },
+    { label: 'ביטוח לאומי',            value: -ni,         cls: 'deduct' },
+    { label: 'ביטוח בריאות',           value: -health,     cls: 'deduct' },
+    null,
+    { label: 'שכר נטו',                value: net,         cls: 'gross', bold: true },
+  ];
+
+  for (const r of rows2) {
+    if (!r) { const d = document.createElement('div'); d.className = 'divider'; bd.appendChild(d); continue; }
+    const div = document.createElement('div');
+    div.className = 'breakdown-row';
+    div.innerHTML = `
+      <span class="row-label" style="${r.bold ? 'color:#fff;font-weight:700' : ''}">${r.label}</span>
+      <span class="row-value ${r.cls}" style="${r.bold ? 'font-size:1.1rem' : ''}">
+        ${r.value < 0 ? '−' : ''}${fmt(Math.abs(r.value))}
+      </span>`;
+    bd.appendChild(div);
+  }
+
+  // ── Render tax table ───────────────────────────────────────────────────
+  const tbody = document.getElementById('tax-table-body');
+  tbody.innerHTML = '';
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    if (r.active) tr.className = 'active-row';
+    tr.innerHTML = `<td>${r.label}</td><td>${r.label}</td><td>${r.rate}</td><td>${r.tax > 0 ? fmt(r.tax) : '—'}</td>`;
+    // Fix: first col should say the bracket description
+    const cells = tr.querySelectorAll('td');
+    cells[0].textContent = 'עד ' + r.label;
+    cells[1].textContent = r.label;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleTable() {
+  const t = document.getElementById('tax-table');
+  const icon = document.getElementById('toggle-icon');
+  if (t.classList.toggle('open')) { icon.textContent = '▼'; }
+  else { icon.textContent = '▶'; }
+}
+
+// Allow Enter key to trigger calculation
+document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+</script>
+</body>
+</html>
